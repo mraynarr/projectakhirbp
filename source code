@@ -1,0 +1,446 @@
+    package finalprojecteas;
+    
+    import java.time.LocalDate;
+    import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
+    import java.util.ArrayList;
+    import java.util.Collections;
+    import java.util.Comparator;
+    import java.util.List;
+    import java.util.Scanner;
+
+    public class Finalprojecteas {
+
+        // PIN untuk autentikasi
+        private static final int PIN = 2305;
+
+        // Method untuk autentikasi PIN
+        private static boolean autentikasi(Scanner scanner) {
+            System.out.print("Masukkan PIN: ");
+            int inputPin = scanner.nextInt();
+            return inputPin == PIN;
+        }
+        
+        // Struktur data untuk mencatat transaksi
+        private static class Transaksi {
+            String namaBarang;
+            int jumlah;
+            double pemasukan;
+            LocalDateTime waktu;
+
+            public Transaksi(String namaBarang, int jumlah, double pemasukan, LocalDateTime waktu) {
+                this.namaBarang = namaBarang;
+                this.jumlah = jumlah;
+                this.pemasukan = pemasukan;
+                this.waktu = waktu;
+            }
+        }
+
+        // Variabel global untuk menu
+        private static ArrayList<String> namaMenu = new ArrayList<>();
+        private static ArrayList<Integer> hargaMenu = new ArrayList<>();
+        private static ArrayList<Integer> jumlahTerjual = new ArrayList<>();
+
+        // Variabel global untuk laporan pemasukan
+        private static ArrayList<String> waktuTransaksi = new ArrayList<>();
+        private static ArrayList<String> namaBarangTerjual = new ArrayList<>();
+        private static ArrayList<Integer> jumlahTerjualTransaksi = new ArrayList<>();
+        private static ArrayList<Integer> pemasukanTransaksi = new ArrayList<>();
+    
+        private static ArrayList<Transaksi> daftarTransaksi = new ArrayList<>();
+
+        // Method untuk role Kasir
+        private static void menuKasir(ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu, ArrayList<Integer> jumlahTerjual, double[] totalPemasukan) {
+            Scanner scanner = new Scanner(System.in);
+
+            while (true) {
+                System.out.println("\n=== Menu Kasir ===");
+                System.out.println("1. Lihat Daftar Menu");
+                System.out.println("2. Transaksi");
+                System.out.println("3. Cari Menu");
+                System.out.println("4. Kembali ke Menu Utama");
+                System.out.print("Pilih menu: ");
+                int pilihan = scanner.nextInt();
+
+                switch (pilihan) {
+                    case 1:
+                        tampilkanMenu(namaMenu, hargaMenu);
+                        break;
+                    case 2:
+                        transaksi(namaMenu, hargaMenu, jumlahTerjual, totalPemasukan);
+                        break;
+                    case 3:
+                        cariMenu(namaMenu, hargaMenu);
+                        break;
+                    case 4:
+                        return;
+                    default:
+                        System.out.println("Pilihan tidak valid!");
+                }
+            }
+        }
+
+        // Method untuk menampilkan daftar menu
+        private static void tampilkanMenu(ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu) {
+            System.out.println("====================================================");
+            System.out.println("                     Daftar Menu                    ");
+            System.out.println("====================================================");
+            System.out.printf("%-4s %-25s %-10s\n", "No", "Nama Menu", "Harga");
+            System.out.println("====================================================");
+
+            for (int i = 0; i < namaMenu.size(); i++) {
+                System.out.printf("%-4d %-25s Rp %-10d\n", i + 1, namaMenu.get(i), hargaMenu.get(i));
+            }
+            System.out.println("====================================================");
+            System.out.println((namaMenu.size() + 1) + ". Kembali");
+        }
+
+        // Method untuk transaksi
+        private static void transaksi(ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu, ArrayList<Integer> jumlahTerjual, double[] totalPemasukan) {
+            Scanner scanner = new Scanner(System.in);
+            ArrayList<String> pesananMenu = new ArrayList<>();
+            ArrayList<Integer> pesananQty = new ArrayList<>();
+            ArrayList<Integer> pesananHarga = new ArrayList<>();
+
+            int totalHarga = 0;
+
+            // Tampilkan menu sekali di awal
+            tampilkanMenu(namaMenu, hargaMenu);
+
+            while (true) {
+                System.out.print("Masukkan nomor menu yang akan dibeli (ketik 0 untuk selesai): ");
+                int pilihan = scanner.nextInt();
+                if (pilihan == 0) break;
+
+                if (pilihan < 1 || pilihan > namaMenu.size()) {
+                    System.out.println("Nomor menu tidak valid!");
+                    continue;
+                }
+
+                System.out.print("Masukkan jumlah pesanan: ");
+                int jumlah = scanner.nextInt();
+
+                int index = pilihan - 1;
+                pesananMenu.add(namaMenu.get(index));
+                pesananQty.add(jumlah);
+                int harga = hargaMenu.get(index) * jumlah;
+                pesananHarga.add(harga);
+
+                jumlahTerjual.set(index, jumlahTerjual.get(index) + jumlah);
+                totalHarga += harga;
+                
+                // Tambahkan ke laporan pemasukan
+                waktuTransaksi.add(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                namaBarangTerjual.add(namaMenu.get(index));
+                jumlahTerjualTransaksi.add(jumlah);
+                pemasukanTransaksi.add(harga);
+            }
+
+            totalPemasukan[0] += totalHarga;
+
+            // Tampilkan Daftar Pesanan
+            System.out.println("\n====================================================");
+            System.out.println("                   Daftar Pesanan                   ");
+            System.out.println("====================================================");
+            System.out.printf("%-4s %-20s %-5s %-10s\n", "No", "Nama Menu", "Qty", "Harga");
+            System.out.println("====================================================");
+
+            for (int i = 0; i < pesananMenu.size(); i++) {
+                System.out.printf("%-4d %-20s %-5d Rp %-10d\n", i + 1, pesananMenu.get(i), pesananQty.get(i), pesananHarga.get(i));
+            }
+            System.out.println("====================================================");
+            System.out.printf("Total harga: Rp %d\n", totalHarga);
+
+            System.out.print("Masukkan uang bayar: ");
+            int uangBayar = scanner.nextInt();
+            System.out.printf("Uang kembalian: Rp %d\n", uangBayar - totalHarga);
+        }
+
+        // Method untuk mencari menu
+        private static void cariMenu(ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu) {
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("\nMasukkan nama menu yang ingin dicari: ");
+            String keyword = scanner.nextLine().toLowerCase();
+
+            System.out.println("\nHasil Pencarian:");
+            boolean ditemukan = false;
+            for (int i = 0; i < namaMenu.size(); i++) {
+                if (namaMenu.get(i).toLowerCase().contains(keyword)) {
+                    System.out.printf("%d. %s - Rp %d\n", i + 1, namaMenu.get(i), hargaMenu.get(i));
+                    ditemukan = true;
+                }
+            }
+
+            if (!ditemukan) {
+                System.out.println("Menu tidak ditemukan.");
+            }
+        }
+
+        
+
+        // Method untuk role Admin
+        private static void menuAdmin(ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu, ArrayList<Integer> jumlahTerjual) {
+            Scanner scanner = new Scanner(System.in);
+
+            while (true) {
+                System.out.println("\n=== Menu Admin ===");
+                System.out.println("1. Lihat Daftar Menu");
+                System.out.println("2. Tambah Menu");
+                System.out.println("3. Ubah Menu");
+                System.out.println("4. Hapus Menu");
+                System.out.println("5. Kembali ke Menu Utama");
+                System.out.print("Pilih menu: ");
+                int pilihan = scanner.nextInt();
+
+                switch (pilihan) {
+                    case 1:
+                        tampilkanMenu(namaMenu, hargaMenu);
+                        break;
+                    case 2:
+                        tambahMenu(scanner, namaMenu, hargaMenu, jumlahTerjual);
+                        break;
+                    case 3:
+                        ubahMenu(scanner, namaMenu, hargaMenu);
+                        break;
+                    case 4:
+                        hapusMenu(scanner, namaMenu, hargaMenu, jumlahTerjual);
+                        break;
+                    case 5:
+                        return;
+                    default:
+                        System.out.println("Pilihan tidak valid!");
+                }
+            }
+        }
+
+        // Method untuk menambah menu
+        private static void tambahMenu(Scanner scanner, ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu, ArrayList<Integer> jumlahTerjual) {
+            System.out.print("\nMasukkan nama menu baru: ");
+            scanner.nextLine(); // Buang newline
+            String menuBaru = scanner.nextLine();
+
+            System.out.print("Masukkan harga menu baru: ");
+            int hargaBaru = scanner.nextInt();
+
+            namaMenu.add(menuBaru); // Gunakan metode add milik ArrayList
+            hargaMenu.add(hargaBaru);
+            jumlahTerjual.add(0); // Jumlah terjual awal adalah 0
+
+            System.out.println("Menu berhasil ditambahkan!");
+        }
+
+        // Method untuk mengubah menu
+        private static void ubahMenu(Scanner scanner, ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu) {
+            System.out.print("\nMasukkan nama menu yang ingin diubah: ");
+            scanner.nextLine(); // Buang newline
+            String cari = scanner.nextLine().toLowerCase();
+
+            for (int i = 0; i < namaMenu.size(); i++) {
+                if (namaMenu.get(i).toLowerCase().equals(cari)) { // Gunakan get untuk mengambil elemen ArrayList
+                    System.out.printf("Menu ditemukan: %s - Rp %d\n", namaMenu.get(i), hargaMenu.get(i));
+                    System.out.println("1. Ubah Nama");
+                    System.out.println("2. Ubah Harga");
+                    System.out.println("3. Kembali");
+                    System.out.print("Pilih opsi: ");
+                    int opsi = scanner.nextInt();
+
+                    switch (opsi) {
+                        case 1:
+                            System.out.print("Masukkan nama baru: ");
+                            scanner.nextLine(); // Buang newline
+                            namaMenu.set(i, scanner.nextLine()); // Gunakan set untuk memperbarui elemen
+                            System.out.println("Nama menu berhasil diubah!");
+                            return;
+                        case 2:
+                            System.out.print("Masukkan harga baru: ");
+                            hargaMenu.set(i, scanner.nextInt()); // Gunakan set untuk memperbarui elemen
+                            System.out.println("Harga menu berhasil diubah!");
+                            return;
+                        case 3:
+                            return;
+                        default:
+                            System.out.println("Opsi tidak valid!");
+                    }
+                }
+            }
+            System.out.println("Menu tidak ditemukan!");
+        }
+
+        // Method untuk menghapus menu
+        private static void hapusMenu(Scanner scanner, ArrayList<String> namaMenu, ArrayList<Integer> hargaMenu, ArrayList<Integer> jumlahTerjual) {
+            System.out.print("\nMasukkan nama menu yang ingin dihapus: ");
+            scanner.nextLine(); // Buang newline
+            String cari = scanner.nextLine().toLowerCase();
+
+            for (int i = 0; i < namaMenu.size(); i++) {
+                if (namaMenu.get(i).toLowerCase().equals(cari)) {
+                    System.out.printf("Yakin ingin menghapus %s? (ya/tidak): ", namaMenu.get(i));
+                    String konfirmasi = scanner.next().toLowerCase();
+
+                    if (konfirmasi.equals("ya")) {
+                        namaMenu.remove(i); // Gunakan remove untuk menghapus elemen
+                        hargaMenu.remove(i);
+                        jumlahTerjual.remove(i);
+                        System.out.println("Menu berhasil dihapus!");
+                        return;
+                    } else {
+                        System.out.println("Penghapusan dibatalkan.");
+                        return;
+                    }
+                }
+            }
+            System.out.println("Menu tidak ditemukan!");
+        }
+        
+        
+
+        // Placeholder untuk role Owner
+        private static void menuOwner(ArrayList<String> namaMenu, ArrayList<Integer> jumlahTerjual, double[] totalPemasukan, ArrayList<Integer> hargaMenu) {
+        Scanner scanner = new Scanner(System.in);
+
+            while (true) {
+                System.out.println("\n=== Menu Owner ===");
+                System.out.println("1. Lihat Laporan Pemasukan Harian");
+                System.out.println("2. Lihat 5 Barang Terlaris");
+                System.out.println("3. Lihat Total Pemasukan");
+                System.out.println("4. Kembali ke Menu Utama");
+                System.out.print("Pilih menu: ");
+                int pilihan = scanner.nextInt();
+
+                switch (pilihan) {
+                    case 1:
+                        lihatLaporanPemasukan();
+                        break;
+                    case 2:
+                        lihatBarangTerlaris(namaMenu, jumlahTerjual, hargaMenu);
+                        break;
+                    case 3:
+                        System.out.printf("\n================================= \nTotal pemasukan: Rp %.2f \n================================= \n", totalPemasukan[0]);
+                        break;
+                    case 4:
+                        return;
+                    default:
+                        System.out.println("Pilihan tidak valid!");
+                }
+            }
+        }
+
+        // Method untuk menampilkan laporan pemasukan
+        private static void lihatLaporanPemasukan() {
+            System.out.println("==================== Laporan Pemasukan Harian =======================");
+            System.out.printf("%-20s %-20s %-10s %-10s\n", "Waktu", "Nama Barang", "Jumlah", "Pemasukan");
+            System.out.println("=====================================================================");
+
+            for (int i = 0; i < waktuTransaksi.size(); i++) {
+                System.out.printf("%-20s %-20s %-10d Rp %-10d\n",
+                    waktuTransaksi.get(i),
+                    namaBarangTerjual.get(i),
+                    jumlahTerjualTransaksi.get(i),
+                    pemasukanTransaksi.get(i));
+            }
+            System.out.println("=====================================================================");
+        }
+
+        // Method untuk menampilkan 5 barang terlaris
+        private static void lihatBarangTerlaris(ArrayList<String> namaMenu, ArrayList<Integer> jumlahTerjual, ArrayList<Integer> hargaMenu) {
+            ArrayList<Integer> pemasukan = new ArrayList<>();
+
+            // Hitung pemasukan per menu
+            for (int i = 0; i < namaMenu.size(); i++) {
+                pemasukan.add(jumlahTerjual.get(i) * hargaMenu.get(i));
+            }
+
+            // Selection sort berdasarkan jumlah terjual
+            for (int i = 0; i < jumlahTerjual.size() - 1; i++) {
+                int maxIdx = i;
+                for (int j = i + 1; j < jumlahTerjual.size(); j++) {
+                    if (jumlahTerjual.get(j) > jumlahTerjual.get(maxIdx)) {
+                        maxIdx = j;
+                    }
+                }
+                // Tukar jumlah terjual
+                int temp = jumlahTerjual.get(i);
+                jumlahTerjual.set(i, jumlahTerjual.get(maxIdx));
+                jumlahTerjual.set(maxIdx, temp);
+
+                // Tukar nama menu
+                String tempName = namaMenu.get(i);
+                namaMenu.set(i, namaMenu.get(maxIdx));
+                namaMenu.set(maxIdx, tempName);
+
+                // Tukar pemasukan
+                int tempPemasukan = pemasukan.get(i);
+                pemasukan.set(i, pemasukan.get(maxIdx));
+                pemasukan.set(maxIdx, tempPemasukan);
+            }
+
+            // Tampilkan hanya 5 barang terlaris
+            System.out.println("======================== Barang Terlaris ==========================");
+            System.out.printf("%-4s %-20s %-10s %-10s\n", "No", "Nama Menu", "Terjual", "Pemasukan");
+            System.out.println("==================================================================");
+
+            for (int i = 0; i < Math.min(5, namaMenu.size()); i++) { // Batasi ke 5 item teratas
+                System.out.printf("%-4d %-20s %-10d Rp %-10d\n", i + 1, namaMenu.get(i), jumlahTerjual.get(i), pemasukan.get(i));
+            }
+            System.out.println("==================================================================");
+        }
+        
+        
+
+        public static void main(String[] args) {
+            Scanner scanner = new Scanner(System.in);
+
+            // Data menu
+            ArrayList<String> namaMenu = new ArrayList<>(List.of("Seblak Original", "Seblak Kwetiau", "Seblak Seafood", "Cilok Kuah", "Cilok Bumbu", "Es Teh Jumbo", "Es Jeruk", "Jus Buah"));
+            ArrayList<Integer> hargaMenu = new ArrayList<>(List.of(10000, 12000, 5000, 6000, 7000, 3000, 7000, 10000));
+            ArrayList<Integer> jumlahTerjual = new ArrayList<>(Collections.nCopies(namaMenu.size(), 0));
+
+            double[] totalPemasukan = {0}; // Total pemasukan semua transaksi
+            
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, dd MMMM yyyy");
+
+            System.out.println("====================================================");
+            System.out.println("       Selamat datang di Program Kasir UMKM        ");
+            System.out.println("====================================================");
+            System.out.println("Date: " + LocalDate.now().format(formatter));
+
+            while (true) {
+                System.out.println("\n================ Warung Gals Homies ================");
+                System.out.println("1. Kasir");
+                System.out.println("2. Admin");
+                System.out.println("3. Owner");
+                System.out.println("4. Exit");
+                System.out.print("Pilih role: ");
+                int role = scanner.nextInt();
+
+                if (role == 4) {
+                    System.out.println("\n\n====================================================");
+                    System.out.println("Terima kasih telah menggunakan aplikasi kami :)");
+                    System.out.println("====================================================");
+                    break;
+                }
+
+                if (!autentikasi(scanner)) {
+                    System.out.println("PIN salah! Akses ditolak.\n");
+                    continue;
+                }
+
+                switch (role) {
+                    case 1:
+                        menuKasir(namaMenu, hargaMenu, jumlahTerjual, totalPemasukan);
+                        break;
+                    case 2:
+                        menuAdmin(namaMenu, hargaMenu, jumlahTerjual);
+                        break;
+                    case 3:
+                        menuOwner(namaMenu, jumlahTerjual, totalPemasukan, hargaMenu);
+                        break;
+                    default:
+                        System.out.println("Pilihan tidak valid!");
+                }
+
+            }
+
+            scanner.close();
+        }
+}
